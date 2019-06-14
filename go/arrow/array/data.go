@@ -33,6 +33,10 @@ type Data struct {
 	length    int
 	buffers   []*memory.Buffer // TODO(sgc): should this be an interface?
 	childData []*Data          // TODO(sgc): managed by ListArray, StructArray and UnionArray types
+
+	// dictionary for the associated array (if any).
+	// only used for Dictionary type
+	dict Interface
 }
 
 func NewData(dtype arrow.DataType, length int, buffers []*memory.Buffer, childData []*Data, nulls, offset int) *Data {
@@ -82,6 +86,11 @@ func (d *Data) Release() {
 			b.Release()
 		}
 		d.buffers, d.childData = nil, nil
+
+		if d.dict != nil {
+			d.dict.Release()
+			d.dict = nil
+		}
 	}
 }
 
@@ -90,6 +99,12 @@ func (d *Data) NullN() int                { return d.nulls }
 func (d *Data) Len() int                  { return d.length }
 func (d *Data) Offset() int               { return d.offset }
 func (d *Data) Buffers() []*memory.Buffer { return d.buffers }
+
+func (d *Data) Copy() *Data {
+	o := NewData(d.dtype, d.length, d.buffers, d.childData, d.nulls, d.offset)
+	o.dict = d.dict
+	return o
+}
 
 // NewSliceData returns a new slice that shares backing data with the input.
 // The returned Data slice starts at i and extends j-i elements, such as:

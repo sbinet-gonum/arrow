@@ -190,7 +190,7 @@ func init() {
 		arrow.LIST:              func(data *Data) Interface { return NewListData(data) },
 		arrow.STRUCT:            func(data *Data) Interface { return NewStructData(data) },
 		arrow.UNION:             unsupportedArrayType,
-		arrow.DICTIONARY:        unsupportedArrayType,
+		arrow.DICTIONARY:        func(data *Data) Interface { return NewDictionaryData(data) },
 		arrow.MAP:               unsupportedArrayType,
 		arrow.EXTENSION:         unsupportedArrayType,
 		arrow.FIXED_SIZE_LIST:   func(data *Data) Interface { return NewFixedSizeListData(data) },
