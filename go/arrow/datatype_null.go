@@ -23,6 +23,8 @@ func (*NullType) ID() Type       { return NULL }
 func (*NullType) Name() string   { return "null" }
 func (*NullType) String() string { return "null" }
 
+func (*NullType) Layout() DataTypeLayout { return DataTypeLayout{[]int64{DTL_AlwaysNullBuffer}, false} }
+
 var (
 	Null *NullType
 	_    DataType = Null

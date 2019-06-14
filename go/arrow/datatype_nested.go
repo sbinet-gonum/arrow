@@ -43,6 +43,8 @@ func (*ListType) ID() Type         { return LIST }
 func (*ListType) Name() string     { return "list" }
 func (t *ListType) String() string { return fmt.Sprintf("list<item: %v>", t.elem) }
 
+func (t *ListType) Layout() DataTypeLayout { return DataTypeLayout{[]int64{1, 4}, false} }
+
 // Elem returns the ListType's element type.
 func (t *ListType) Elem() DataType { return t.elem }
 
@@ -73,6 +75,8 @@ func (*FixedSizeListType) Name() string { return "fixed_size_list" }
 func (t *FixedSizeListType) String() string {
 	return fmt.Sprintf("fixed_size_list<item: %v>[%d]", t.elem, t.n)
 }
+
+func (t *FixedSizeListType) Layout() DataTypeLayout { return DataTypeLayout{[]int64{1}, false} }
 
 // Elem returns the FixedSizeListType's element type.
 func (t *FixedSizeListType) Elem() DataType { return t.elem }
@@ -136,6 +140,8 @@ func (t *StructType) String() string {
 	o.WriteString(">")
 	return o.String()
 }
+
+func (t *StructType) Layout() DataTypeLayout { return DataTypeLayout{[]int64{1}, false} }
 
 func (t *StructType) Fields() []Field   { return t.fields }
 func (t *StructType) Field(i int) Field { return t.fields[i] }

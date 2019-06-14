@@ -27,6 +27,8 @@ func (t *BooleanType) String() string { return "bool" }
 // BitWidth returns the number of bits required to store a single element of this data type in memory.
 func (t *BooleanType) BitWidth() int { return 1 }
 
+func (t *BooleanType) Layout() DataTypeLayout { return DataTypeLayout{[]int64{1, 1}, false} }
+
 type FixedSizeBinaryType struct {
 	ByteWidth int
 }
@@ -34,6 +36,10 @@ type FixedSizeBinaryType struct {
 func (*FixedSizeBinaryType) ID() Type        { return FIXED_SIZE_BINARY }
 func (*FixedSizeBinaryType) Name() string    { return "fixed_size_binary" }
 func (t *FixedSizeBinaryType) BitWidth() int { return 8 * t.ByteWidth }
+
+func (t *FixedSizeBinaryType) Layout() DataTypeLayout {
+	return DataTypeLayout{[]int64{1, int64(t.BitWidth())}, false}
+}
 
 func (t *FixedSizeBinaryType) String() string {
 	return "fixed_size_binary[" + strconv.Itoa(t.ByteWidth) + "]"
@@ -73,6 +79,10 @@ func (t *TimestampType) String() string { return "timestamp[" + t.Unit.String() 
 // BitWidth returns the number of bits required to store a single element of this data type in memory.
 func (*TimestampType) BitWidth() int { return 64 }
 
+func (t *TimestampType) Layout() DataTypeLayout {
+	return DataTypeLayout{[]int64{1, int64(t.BitWidth())}, false}
+}
+
 // Time32Type is encoded as a 32-bit signed integer, representing either seconds or milliseconds since midnight.
 type Time32Type struct {
 	Unit TimeUnit
@@ -83,6 +93,10 @@ func (*Time32Type) Name() string     { return "time32" }
 func (*Time32Type) BitWidth() int    { return 32 }
 func (t *Time32Type) String() string { return "time32[" + t.Unit.String() + "]" }
 
+func (t *Time32Type) Layout() DataTypeLayout {
+	return DataTypeLayout{[]int64{1, int64(t.BitWidth())}, false}
+}
+
 // Time64Type is encoded as a 64-bit signed integer, representing either microseconds or nanoseconds since midnight.
 type Time64Type struct {
 	Unit TimeUnit
@@ -92,6 +106,10 @@ func (*Time64Type) ID() Type         { return TIME64 }
 func (*Time64Type) Name() string     { return "time64" }
 func (*Time64Type) BitWidth() int    { return 64 }
 func (t *Time64Type) String() string { return "time64[" + t.Unit.String() + "]" }
+
+func (t *Time64Type) Layout() DataTypeLayout {
+	return DataTypeLayout{[]int64{1, int64(t.BitWidth())}, false}
+}
 
 // DurationType is encoded as a 64-bit signed integer, representing an amount
 // of elapsed time without any relation to a calendar artifact.
@@ -104,6 +122,10 @@ func (*DurationType) Name() string     { return "duration" }
 func (*DurationType) BitWidth() int    { return 64 }
 func (t *DurationType) String() string { return "duration[" + t.Unit.String() + "]" }
 
+func (t *DurationType) Layout() DataTypeLayout {
+	return DataTypeLayout{[]int64{1, int64(t.BitWidth())}, false}
+}
+
 // Float16Type represents a floating point value encoded with a 16-bit precision.
 type Float16Type struct{}
 
@@ -113,6 +135,10 @@ func (t *Float16Type) String() string { return "float16" }
 
 // BitWidth returns the number of bits required to store a single element of this data type in memory.
 func (t *Float16Type) BitWidth() int { return 16 }
+
+func (t *Float16Type) Layout() DataTypeLayout {
+	return DataTypeLayout{[]int64{1, int64(t.BitWidth())}, false}
+}
 
 // MonthInterval represents a number of months.
 type MonthInterval int32
@@ -124,6 +150,10 @@ type MonthIntervalType struct{}
 func (*MonthIntervalType) ID() Type       { return INTERVAL }
 func (*MonthIntervalType) Name() string   { return "month_interval" }
 func (*MonthIntervalType) String() string { return "month_interval" }
+
+func (t *MonthIntervalType) Layout() DataTypeLayout {
+	return DataTypeLayout{[]int64{1, int64(t.BitWidth())}, false}
+}
 
 // BitWidth returns the number of bits required to store a single element of this data type in memory.
 func (t *MonthIntervalType) BitWidth() int { return 32 }
@@ -141,6 +171,10 @@ type DayTimeIntervalType struct{}
 func (*DayTimeIntervalType) ID() Type       { return INTERVAL }
 func (*DayTimeIntervalType) Name() string   { return "day_time_interval" }
 func (*DayTimeIntervalType) String() string { return "day_time_interval" }
+
+func (t *DayTimeIntervalType) Layout() DataTypeLayout {
+	return DataTypeLayout{[]int64{1, int64(t.BitWidth())}, false}
+}
 
 // BitWidth returns the number of bits required to store a single element of this data type in memory.
 func (t *DayTimeIntervalType) BitWidth() int { return 64 }

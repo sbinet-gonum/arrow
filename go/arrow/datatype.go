@@ -127,6 +127,10 @@ type DataType interface {
 	ID() Type
 	// Name is name of the data type.
 	Name() string
+
+	// Layout returns the data type layout.
+	// Children are not included.
+	Layout() DataTypeLayout
 }
 
 // FixedWidthDataType is the representation of an Arrow type that
@@ -140,4 +144,18 @@ type FixedWidthDataType interface {
 type BinaryDataType interface {
 	DataType
 	binary()
+}
+
+const (
+	DTL_AlwaysNullBuffer   = +0
+	DTL_VariableSizeBuffer = -1
+)
+
+type DataTypeLayout struct {
+	// The bit width for each buffer in this DataType's representation
+	// (DTL_VariableSizeBuffer if the item size for a given buffer is unknown or variable,
+	//  DTL_AlwaysNullBuffer if the buffer is always null).
+	// Child types are not included, they should be inspected separately.
+	bitWidths []int64
+	hasDict   bool
 }
