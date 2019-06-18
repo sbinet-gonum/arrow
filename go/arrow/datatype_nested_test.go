@@ -354,3 +354,96 @@ func TestFixedSizeListOf(t *testing.T) {
 		})
 	}
 }
+
+func TestMapOf(t *testing.T) {
+	for _, tc := range []struct {
+		key, val DataType
+		sorted   bool
+		want     string
+	}{
+		{
+			key:  PrimitiveTypes.Int32,
+			val:  PrimitiveTypes.Int32,
+			want: "map<int32, int32>",
+		},
+		{
+			key:    PrimitiveTypes.Int32,
+			val:    PrimitiveTypes.Int32,
+			sorted: true,
+			want:   "map<int32, int32, keys_sorted>",
+		},
+		{
+			key:  PrimitiveTypes.Int32,
+			val:  BinaryTypes.String,
+			want: "map<int32, utf8>",
+		},
+		{
+			key:  PrimitiveTypes.Int32,
+			val:  MapOf(PrimitiveTypes.Int32, BinaryTypes.String),
+			want: "map<int32, map<int32, utf8>>",
+		},
+		{
+			key:    PrimitiveTypes.Int32,
+			val:    MapOf(PrimitiveTypes.Int32, BinaryTypes.String),
+			sorted: true,
+			want:   "map<int32, map<int32, utf8>, keys_sorted>",
+		},
+		{
+			key:  PrimitiveTypes.Int32,
+			val:  SortedMapOf(PrimitiveTypes.Int32, BinaryTypes.String),
+			want: "map<int32, map<int32, utf8, keys_sorted>>",
+		},
+		{
+			key:    PrimitiveTypes.Int32,
+			val:    SortedMapOf(PrimitiveTypes.Int32, BinaryTypes.String),
+			sorted: true,
+			want:   "map<int32, map<int32, utf8, keys_sorted>, keys_sorted>",
+		},
+	} {
+		t.Run(tc.want, func(t *testing.T) {
+			var (
+				mt1 *MapType
+				mt2 *MapType
+				mt3 *MapType
+			)
+			switch {
+			case tc.sorted:
+				mt1 = SortedMapOf(tc.key, tc.val)
+				mt2 = SortedMapOf(tc.key, tc.val)
+				mt3 = MapOf(tc.key, tc.val)
+			default:
+				mt1 = MapOf(tc.key, tc.val)
+				mt2 = MapOf(tc.key, tc.val)
+				mt3 = SortedMapOf(tc.key, tc.val)
+			}
+
+			if got, want := mt1.ID(), MAP; got != want {
+				t.Fatalf("invalid type id: got=%v, want=%v", got, want)
+			}
+
+			if got, want := mt1.Sorted(), tc.sorted; got != want {
+				t.Fatalf("invalid sorted attribute: got=%v, want=%v", got, want)
+			}
+
+			if got, want := mt1.Key(), tc.key; !TypeEquals(got, want) {
+				t.Fatalf("invalid map-key types: got=%v, want=%v", got, want)
+			}
+
+			if got, want := mt1.Value(), tc.val; !TypeEquals(got, want) {
+				t.Fatalf("invalid map-value types: got=%v, want=%v", got, want)
+			}
+
+			if got, want := mt1.String(), tc.want; got != want {
+				t.Fatalf("invalid representation:\ngot= %q\nwant=%q", got, want)
+			}
+
+			if got, want := mt1, mt2; !TypeEquals(got, want) {
+				t.Fatalf("identical maps should compare equal:\ngot= %v\nwant=%v", got, want)
+			}
+
+			if got, want := mt1, mt3; TypeEquals(got, want) {
+				t.Fatalf("not identical maps should not compare equal:\ngot= %v\nwant=%v", got, want)
+			}
+		})
+	}
+}

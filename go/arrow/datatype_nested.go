@@ -148,6 +148,58 @@ func (t *StructType) FieldByName(name string) (Field, bool) {
 	return t.fields[i], true
 }
 
+// MapType describes a nested type in which each array slot contains
+// a variable number of key-item pair.
+type MapType struct {
+	sorted bool // whether keys are sorted
+
+	key DataType
+	val DataType
+}
+
+// MapOf creates a new (unsorted) Map type from the provided key and value types.
+//
+// MapOf panics if either the key or value type is nil.
+func MapOf(k, v DataType) *MapType {
+	if k == nil {
+		panic("arrow: nil key type")
+	}
+	if v == nil {
+		panic("arrow: nil value type")
+	}
+	return &MapType{key: k, val: v}
+}
+
+// SortedMapOf creates a new (sorted) Map type from the provided key and value types.
+//
+// SortedMapOf panics if either the key or value type is nil.
+func SortedMapOf(k, v DataType) *MapType {
+	if k == nil {
+		panic("arrow: nil key type")
+	}
+	if v == nil {
+		panic("arrow: nil value type")
+	}
+	return &MapType{key: k, val: v, sorted: true}
+}
+
+func (*MapType) ID() Type     { return MAP }
+func (*MapType) Name() string { return "map" }
+
+func (t *MapType) String() string {
+	o := new(strings.Builder)
+	sorted := ""
+	if t.sorted {
+		sorted = ", keys_sorted"
+	}
+	fmt.Fprintf(o, "%s<%s, %s%s>", t.Name(), t.key, t.val, sorted)
+	return o.String()
+}
+
+func (t *MapType) Key() DataType   { return t.key }
+func (t *MapType) Value() DataType { return t.val }
+func (t *MapType) Sorted() bool    { return t.sorted }
+
 type Field struct {
 	Name     string   // Field name
 	Type     DataType // The field's data type
@@ -177,4 +229,5 @@ func (f Field) String() string {
 var (
 	_ DataType = (*ListType)(nil)
 	_ DataType = (*StructType)(nil)
+	_ DataType = (*MapType)(nil)
 )
