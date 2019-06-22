@@ -26,18 +26,10 @@ import (
 
 	"github.com/apache/arrow/go/arrow"
 	"github.com/apache/arrow/go/arrow/array"
+	"github.com/apache/arrow/go/arrow/decimal128"
 	"github.com/apache/arrow/go/arrow/float16"
 	"github.com/apache/arrow/go/arrow/memory"
 	"github.com/pkg/errors"
-)
-
-const (
-	kData         = "DATA"
-	kDays         = "days"
-	kDayTime      = "DAY_TIME"
-	kDuration     = "duration"
-	kMilliseconds = "milliseconds"
-	kYearMonth    = "YEAR_MONTH"
 )
 
 type Schema struct {
@@ -52,15 +44,15 @@ type Field struct {
 }
 
 type dataType struct {
-	Name      string `json:"name"`
-	Signed    bool   `json:"isSigned,omitempty"`
-	BitWidth  int    `json:"bitWidth,omitempty"`
-	Precision string `json:"precision,omitempty"`
-	ByteWidth int    `json:"byteWidth,omitempty"`
-	ListSize  int32  `json:"listSize,omitempty"`
-	Unit      string `json:"unit,omitempty"`
-	TimeZone  string `json:"timezone,omitempty"`
-	Scale     int    `json:"scale,omitempty"` // for Decimal128
+	Name      string      `json:"name"`
+	Signed    bool        `json:"isSigned,omitempty"`
+	BitWidth  int         `json:"bitWidth,omitempty"`
+	Precision interface{} `json:"precision,omitempty"`
+	ByteWidth int         `json:"byteWidth,omitempty"`
+	ListSize  int32       `json:"listSize,omitempty"`
+	Unit      string      `json:"unit,omitempty"`
+	TimeZone  string      `json:"timezone,omitempty"`
+	Scale     int32       `json:"scale,omitempty"` // for Decimal128
 }
 
 func dtypeToJSON(dt arrow.DataType) dataType {
@@ -137,6 +129,8 @@ func dtypeToJSON(dt arrow.DataType) dataType {
 		case arrow.Nanosecond:
 			return dataType{Name: "duration", Unit: "NANOSECOND"}
 		}
+	case *arrow.Decimal128Type:
+		return dataType{Name: "decimal", Precision: dt.Precision, Scale: dt.Scale}
 
 	case *arrow.ListType:
 		return dataType{Name: "list"}
@@ -183,7 +177,7 @@ func dtypeFromJSON(dt dataType, children []Field) arrow.DataType {
 			}
 		}
 	case "floatingpoint":
-		switch dt.Precision {
+		switch dt.Precision.(string) {
 		case "HALF":
 			return arrow.FixedWidthTypes.Float16
 		case "SINGLE":
@@ -255,6 +249,15 @@ func dtypeFromJSON(dt dataType, children []Field) arrow.DataType {
 			return arrow.FixedWidthTypes.Duration_us
 		case "NANOSECOND":
 			return arrow.FixedWidthTypes.Duration_ns
+		}
+	case "decimal":
+		prec, err := dt.Precision.(json.Number).Int64()
+		if err != nil {
+			panic(err)
+		}
+		return &arrow.Decimal128Type{
+			Precision: int32(prec),
+			Scale:     dt.Scale,
 		}
 	}
 	panic(errors.Errorf("unknown DataType %#v", dt))
@@ -610,6 +613,14 @@ func arrayFromJSON(mem memory.Allocator, dt arrow.DataType, arr Array) array.Int
 		bldr.AppendValues(data, valids)
 		return bldr.NewArray()
 
+	case *arrow.Decimal128Type:
+		bldr := array.NewDecimal128Builder(mem, dt)
+		defer bldr.Release()
+		data := decimalFromJSON(arr.Data)
+		valids := validsFromJSON(arr.Valids)
+		bldr.AppendValues(data, valids)
+		return bldr.NewArray()
+
 	default:
 		panic(errors.Errorf("unknown data type %v %T", dt, dt))
 	}
@@ -842,6 +853,13 @@ func arrayToJSON(field arrow.Field, arr array.Interface) Array {
 			Name:   field.Name,
 			Count:  arr.Len(),
 			Data:   durationToJSON(arr),
+			Valids: validsToJSON(arr),
+		}
+	case *array.Decimal128:
+		return Array{
+			Name:   field.Name,
+			Count:  arr.Len(),
+			Data:   decimalToJSON(arr),
 			Valids: validsToJSON(arr),
 		}
 
@@ -1318,6 +1336,26 @@ func durationToJSON(arr *array.Duration) []interface{} {
 	o := make([]interface{}, arr.Len())
 	for i := range o {
 		o[i] = arr.Value(i)
+	}
+	return o
+}
+
+func decimalToJSON(arr *array.Decimal128) []interface{} {
+	o := make([]interface{}, arr.Len())
+	for i := range o {
+		o[i] = arr.Value(i)
+	}
+	return o
+}
+
+func decimalFromJSON(vs []interface{}) []decimal128.Num {
+	o := make([]decimal128.Num, len(vs))
+	for i, v := range vs {
+		var err error
+		o[i], err = decimal128.FromString(v.(string))
+		if err != nil {
+			panic(err)
+		}
 	}
 	return o
 }

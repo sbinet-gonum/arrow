@@ -54,6 +54,12 @@ func FromI64(v int64) Num {
 	}
 }
 
+// FromString returns a new signed 128-bit integer value from the provided
+// string representation.
+func FromString(s string) (Num, error) {
+	panic("not implemented")
+}
+
 // LowBits returns the low bits of the two's complement representation of the number.
 func (n Num) LowBits() uint64 { return n.lo }
 
